@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrigoSense — Monitoreo Inteligente de Equipos de Frío</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c10;
+  --s1: #0d1219;
+  --s2: #101825;
+  --border: #162030;
+  --border2: #1e2f44;
+  --ice: #00d4e8;
+  --ice2: #00a8bc;
+  --ice-glow: rgba(0,212,232,0.10);
+  --ice-glow2: rgba(0,212,232,0.04);
+  --warn: #ff5f3a;
+  --green: #1de99b;
+  --yellow: #f0b429;
+  --text: #c8d8e8;
+  --text-dim: #546e8a;
+  --text-faint: #263545;
+  --display: 'Bebas Neue', sans-serif;
+  --ui: 'Syne', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-weight:400;line-height:1.6;overflow-x:hidden;font-size:17px}
+
+/* ─── NAV ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5vw;height:58px;
+  background:rgba(8,12,16,0.9);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-family:var(--display);font-size:1.45rem;letter-spacing:0.1em;color:var(--ice);
+  display:flex;align-items:center;gap:0.5rem;
+}
+.logo-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--ice);box-shadow:0 0 10px var(--ice);
+  animation:blink 2.5s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.logo span{color:var(--text-dim)}
+.nav-links{display:flex;gap:2.5rem;list-style:none}
+.nav-links a{
+  color:var(--text-dim);text-decoration:none;
+  font-size:0.85rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--ice)}
+.nav-cta{
+  background:transparent;border:1px solid var(--ice);color:var(--ice);
+  padding:0.4rem 1.2rem;border-radius:3px;
+  font-family:var(--mono);font-size:0.72rem;font-weight:500;letter-spacing:0.05em;
+  text-decoration:none;transition:all 0.2s;
+}
+.nav-cta:hover{background:var(--ice);color:var(--bg)}
+
+/* ─── HERO ─── */
+.hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;
+  padding:0 5vw;
+  padding-top:58px;
+  position:relative;overflow:hidden;
+  gap:3rem;
+}
+
+/* background grid */
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,232,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,232,0.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 90% 90% at 60% 40%,black 20%,transparent 80%);
+}
+
+/* ambient glow */
+.hero-glow{
+  position:absolute;top:10%;right:10%;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,232,0.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-glow2{
+  position:absolute;bottom:20%;left:5%;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,232,0.03) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+/* LEFT */
+.hero-left{position:relative;z-index:2}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  border:1px solid var(--border2);
+  background:var(--s1);
+  padding:0.3rem 0.8rem;border-radius:3px;
+  font-family:var(--mono);font-size:0.65rem;color:var(--ice);
+  letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:1.8rem;
+  animation:fadeUp 0.7s ease both;
+}
+.pulse-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--ice);box-shadow:0 0 8px var(--ice);
+  animation:blink 2s infinite;
+}
+.hero h1{
+  font-family:var(--display);
+  font-size:clamp(3.8rem,6.5vw,6.2rem);
+  line-height:0.93;letter-spacing:0.02em;
+  animation:fadeUp 0.8s 0.1s ease both;
+}
+.hero h1 .hl{color:var(--ice)}
+.hero h1 .dim{color:var(--text-dim)}
+.hero-desc{
+  font-size:1.1rem;color:var(--text-dim);
+  max-width:440px;line-height:1.75;
+  margin-top:1.5rem;
+  animation:fadeUp 0.8s 0.2s ease both;
+}
+.hero-actions{
+  display:flex;gap:0.8rem;margin-top:2.2rem;flex-wrap:wrap;
+  animation:fadeUp 0.8s 0.3s ease both;
+}
+.btn-p{
+  background:var(--ice);color:var(--bg);
+  padding:0.8rem 1.8rem;border-radius:3px;
+  font-family:var(--ui);font-weight:700;font-size:0.82rem;letter-spacing:0.06em;text-transform:uppercase;
+  text-decoration:none;transition:all 0.2s;
+  box-shadow:0 0 24px rgba(0,212,232,0.2);
+}
+.btn-p:hover{background:#1de3f8;transform:translateY(-2px);box-shadow:0 0 36px rgba(0,212,232,0.35)}
+.btn-g{
+  border:1px solid var(--border2);color:var(--text-dim);
+  padding:0.8rem 1.8rem;border-radius:3px;
+  font-family:var(--ui);font-weight:500;font-size:0.82rem;
+  text-decoration:none;transition:all 0.2s;
+}
+.btn-g:hover{border-color:var(--ice);color:var(--ice)}
+
+.hero-kpis{
+  display:flex;gap:2rem;margin-top:3.5rem;
+  animation:fadeUp 0.8s 0.4s ease both;
+}
+.kpi-item{}
+.kpi-val{
+  font-family:var(--display);font-size:2.2rem;letter-spacing:0.04em;
+  color:var(--ice);line-height:1;
+}
+.kpi-label{
+  font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:0.1em;margin-top:0.2rem;
+}
+.kpi-div{width:1px;background:var(--border2);align-self:stretch}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ─── DIGITAL TWIN HERO RIGHT ─── */
+.hero-right{
+  position:relative;z-index:2;
+  animation:fadeUp 1s 0.5s ease both;
+}
+
+.dt-shell{
+  position:relative;
+  background:var(--s1);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:1.6rem;
+  overflow:hidden;
+}
+.dt-shell::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--ice),transparent);
+  opacity:0.6;
+}
+
+/* topbar */
+.dt-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.2rem;
+}
+.dt-title{
+  font-family:var(--mono);font-size:0.65rem;
+  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.12em;
+  display:flex;align-items:center;gap:0.5rem;
+}
+.dt-title::before{content:'//';color:var(--text-faint)}
+.dt-topright{display:flex;align-items:center;gap:1rem}
+.dt-status{
+  font-family:var(--mono);font-size:0.6rem;
+  color:var(--green);display:flex;align-items:center;gap:0.4rem;
+}
+.dt-status::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px var(--green);
+  animation:blink 2s infinite;
+}
+.dt-timestamp{
+  font-family:var(--mono);font-size:0.58rem;color:var(--text-faint);
+}
+
+/* tab selector inside panel */
+.dt-tabs{
+  display:flex;gap:0.3rem;margin-bottom:1.2rem;
+}
+.dt-tab{
+  font-family:var(--mono);font-size:0.58rem;letter-spacing:0.08em;
+  text-transform:uppercase;padding:0.25rem 0.7rem;border-radius:3px;
+  border:1px solid var(--border);color:var(--text-faint);
+  background:transparent;cursor:pointer;transition:all 0.2s;
+}
+.dt-tab:hover{color:var(--text-dim);border-color:var(--border2)}
+.dt-tab.active{background:var(--ice-glow);border-color:rgba(0,212,232,0.35);color:var(--ice)}
+
+/* Blueprint fridge SVG area */
+.dt-blueprint{
+  width:100%;height:260px;
+  position:relative;margin-bottom:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.fridge-svg{
+  width:190px;height:230px;
+  filter:drop-shadow(0 0 24px rgba(0,212,232,0.18));
+  transition:filter 0.5s;
+}
+.fridge-svg.hot{
+  filter:drop-shadow(0 0 28px rgba(255,95,58,0.25));
+}
+
+/* Data rows */
+.dt-rows{display:flex;flex-direction:column;gap:0.45rem}
+.dt-row{
+  display:grid;grid-template-columns:1fr auto auto;gap:1rem;
+  align-items:center;
+  padding:0.6rem 0.9rem;
+  background:var(--bg);
+  border:1px solid var(--border);border-radius:6px;
+  font-family:var(--mono);font-size:0.7rem;
+  cursor:pointer;
+  transition:border-color 0.2s, background 0.2s;
+  position:relative;overflow:hidden;
+}
+.dt-row::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--ice);opacity:0;transition:opacity 0.2s;
+}
+.dt-row:hover{background:var(--s2);border-color:var(--border2)}
+.dt-row:hover::before{opacity:1}
+.dt-row.expanded{
+  border-color:rgba(0,212,232,0.3);
+  background:var(--s2);
+}
+.dt-row.expanded::before{opacity:1}
+.dt-row-label{color:var(--text-dim)}
+.dt-row-val{color:var(--text);font-weight:500;white-space:nowrap}
+.dt-row-val.ok{color:var(--green)}
+.dt-row-val.warn{color:var(--warn)}
+.dt-row-val.caution{color:var(--yellow)}
+.dt-bar-wrap{
+  width:70px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;
+}
+.dt-bar-fill{height:100%;border-radius:2px;transition:width 1s ease,background 0.5s}
+.fill-ok{background:var(--green)}
+.fill-warn{background:var(--warn)}
+.fill-caution{background:var(--yellow)}
+.fill-ice{background:var(--ice)}
+
+/* expandable row detail */
+.dt-row-detail{
+  grid-column:1/-1;
+  max-height:0;overflow:hidden;
+  transition:max-height 0.35s ease;
+  font-size:0.65rem;color:var(--text-dim);line-height:1.6;
+}
+.dt-row.expanded .dt-row-detail{
+  max-height:80px;
+  padding-top:0.5rem;
+  border-top:1px solid var(--border);
+  margin-top:0.3rem;
+}
+
+/* mini sparkline inside detail */
+.dt-sparkline{
+  display:flex;align-items:flex-end;gap:2px;
+  height:28px;margin-top:0.4rem;
+}
+.sp-bar{
+  flex:1;border-radius:1px 1px 0 0;
+  background:var(--ice-glow);border-top:1px solid rgba(0,212,232,0.3);
+  transition:height 0.6s ease;
+}
+.sp-bar.hi{background:rgba(255,95,58,0.15);border-top-color:rgba(255,95,58,0.5)}
+.sp-bar.md{background:rgba(240,180,41,0.1);border-top-color:rgba(240,180,41,0.35)}
+
+/* Alert pill */
+.dt-alert{
+  margin-top:0.8rem;
+  display:flex;align-items:flex-start;gap:0.6rem;
+  padding:0.75rem 1rem;
+  background:rgba(255,95,58,0.07);
+  border:1px solid rgba(255,95,58,0.25);border-radius:6px;
+  font-family:var(--mono);font-size:0.65rem;color:var(--warn);
+  line-height:1.5;
+}
+.alert-pip{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--warn);box-shadow:0 0 8px var(--warn);
+  flex-shrink:0;margin-top:0.2rem;
+  animation:blink 1s infinite;
+}
+
+/* mini metrics row */
+.dt-mini-metrics{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:0.5rem;margin-bottom:1rem;
+}
+.dt-mini-m{
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:0.6rem 0.8rem;text-align:center;
+}
+.dt-mini-label{
+  font-family:var(--mono);font-size:0.55rem;
+  color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;
+  margin-bottom:0.2rem;
+}
+.dt-mini-val{
+  font-family:var(--display);font-size:1.3rem;
+  letter-spacing:0.04em;line-height:1;
+}
+.dt-mini-val.ok{color:var(--green)}
+.dt-mini-val.warn{color:var(--warn)}
+.dt-mini-val.caution{color:var(--yellow)}
+
+/* ─── SECTION COMMONS ─── */
+section{padding:6rem 5vw}
+.stag{
+  font-family:var(--mono);font-size:0.75rem;
+  color:var(--ice);text-transform:uppercase;letter-spacing:0.14em;
+  display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;
+}
+.stag::before{content:'//';color:var(--text-faint)}
+.sh{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,3.8vw,3.6rem);
+  letter-spacing:0.03em;line-height:1;
+  margin-bottom:0.8rem;
+}
+.sdesc{
+  font-size:1.05rem;color:var(--text-dim);
+  max-width:540px;line-height:1.75;margin-bottom:3rem;
+}
+
+/* ─── FLOW DIAGRAM ─── */
+.flow{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.flow-diagram{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  gap:0;flex-wrap:nowrap;
+  overflow-x:auto;
+  padding:1rem 0;
+}
+.flow-node{
+  display:flex;flex-direction:column;align-items:center;gap:0.6rem;
+  min-width:110px;padding:0 0.5rem;flex-shrink:0;
+}
+.fn-icon{
+  width:52px;height:52px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+  position:relative;
+  transition:border-color 0.3s;
+}
+.fn-icon.active{
+  border-color:rgba(0,212,232,0.5);
+  box-shadow:0 0 20px rgba(0,212,232,0.1);
+}
+.fn-icon.active::after{
+  content:'';position:absolute;inset:-4px;border-radius:13px;
+  border:1px solid rgba(0,212,232,0.15);
+}
+.fn-label{
+  font-family:var(--mono);font-size:0.72rem;
+  color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:0.08em;text-align:center;line-height:1.4;
+}
+.fn-sub{
+  font-size:0.68rem;color:var(--text-faint);
+  font-family:var(--mono);text-align:center;
+}
+.flow-arrow{
+  display:flex;flex-direction:column;align-items:center;
+  gap:0.2rem;flex-shrink:0;padding:0 0.4rem;margin-bottom:1.6rem;
+}
+.arrow-line{
+  width:40px;height:1px;
+  background:linear-gradient(90deg,var(--border2),var(--ice),var(--border2));
+  position:relative;
+}
+.arrow-line::after{
+  content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+  border-left:5px solid var(--ice);
+  border-top:4px solid transparent;
+  border-bottom:4px solid transparent;
+}
+.arrow-data{
+  font-family:var(--mono);font-size:0.55rem;
+  color:var(--ice);letter-spacing:0.06em;
+  animation:dataPulse 2s infinite;
+}
+@keyframes dataPulse{
+  0%,100%{opacity:0.4}50%{opacity:1}
+}
+
+/* ─── SERVICES v2 ─── */
+.srv-intro{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:3rem;flex-wrap:wrap;gap:1rem;
+}
+.srv-intro-hint{
+  font-family:var(--mono);font-size:0.65rem;
+  color:var(--text-faint);letter-spacing:0.08em;
+  display:flex;align-items:center;gap:0.4rem;
+}
+.srv-intro-hint::before{content:'↗';color:var(--ice)}
+
+/* Tab selector */
+.srv-tabs{
+  display:flex;gap:0.4rem;margin-bottom:2.5rem;flex-wrap:wrap;
+}
+.srv-tab{
+  font-family:var(--mono);font-size:0.65rem;font-weight:500;
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.4rem 1rem;border-radius:4px;
+  border:1px solid var(--border2);color:var(--text-dim);
+  background:transparent;cursor:pointer;transition:all 0.2s;
+}
+.srv-tab:hover{border-color:var(--ice);color:var(--ice)}
+.srv-tab.active{background:var(--ice-glow);border-color:rgba(0,212,232,0.4);color:var(--ice)}
+
+/* Cards grid */
+.srv2-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1rem;
+}
+
+.srv2-card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:0;
+  overflow:hidden;
+  cursor:pointer;
+  transition:border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+  position:relative;
+}
+.srv2-card:hover{
+  border-color:rgba(0,212,232,0.3);
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.3);
+}
+.srv2-card.open{
+  border-color:rgba(0,212,232,0.45);
+  box-shadow:0 0 0 1px rgba(0,212,232,0.1);
+}
+
+/* Top accent bar by type */
+.srv2-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  opacity:0;transition:opacity 0.3s;
+}
+.srv2-card.ice-type::before{background:linear-gradient(90deg,transparent,var(--ice),transparent);opacity:0.6}
+.srv2-card.grn-type::before{background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:0.6}
+.srv2-card.red-type::before{background:linear-gradient(90deg,transparent,var(--warn),transparent);opacity:0.6}
+.srv2-card.open::before,.srv2-card:hover::before{opacity:1!important}
+
+/* Card face (always visible) */
+.srv2-face{
+  padding:1.6rem;
+  display:flex;align-items:flex-start;gap:1rem;
+}
+.srv2-ico{
+  width:48px;height:48px;flex-shrink:0;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+  position:relative;
+}
+.srv2-ico.ice{background:rgba(0,212,232,0.07);border:1px solid rgba(0,212,232,0.2)}
+.srv2-ico.grn{background:rgba(29,233,155,0.07);border:1px solid rgba(29,233,155,0.2)}
+.srv2-ico.red{background:rgba(255,95,58,0.07);border:1px solid rgba(255,95,58,0.2)}
+
+.srv2-head{}
+.srv2-label{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:0.3rem;
+}
+.srv2-label.ice{color:var(--ice)}
+.srv2-label.grn{color:var(--green)}
+.srv2-label.red{color:var(--warn)}
+.srv2-title{font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:0.4rem}
+.srv2-tagline{font-size:0.9rem;color:var(--text-dim);line-height:1.55}
+
+/* Toggle arrow */
+.srv2-toggle{
+  position:absolute;bottom:1rem;right:1rem;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;color:var(--text-dim);
+  transition:all 0.3s;
+}
+.srv2-card.open .srv2-toggle{background:var(--ice);color:var(--bg);transform:rotate(180deg)}
+
+/* Expandable detail */
+.srv2-detail{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  border-top:1px solid transparent;
+}
+.srv2-card.open .srv2-detail{
+  max-height:300px;
+  border-top-color:var(--border);
+}
+.srv2-detail-inner{padding:1.2rem 1.6rem 1.6rem}
+.srv2-items{
+  display:flex;flex-direction:column;gap:0.55rem;
+}
+.srv2-item{
+  display:flex;align-items:center;gap:0.7rem;
+  font-size:0.9rem;color:var(--text-dim);
+}
+.srv2-item-dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+}
+.ice .srv2-item-dot{background:var(--ice)}
+.grn .srv2-item-dot{background:var(--green)}
+.red .srv2-item-dot{background:var(--warn)}
+.srv2-cta{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  margin-top:1.2rem;
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--ice);text-decoration:none;
+  transition:gap 0.2s;
+}
+.srv2-cta:hover{gap:0.7rem}
+
+/* ─── PLANS ─── */
+.plans-bg{background:var(--s1)}
+.plans-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+  margin-top:2rem;
+}
+.plan{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:2rem;
+  transition:border-color 0.2s,transform 0.2s;position:relative;
+}
+.plan:hover{border-color:var(--border2);transform:translateY(-3px)}
+.plan.hot{border-color:rgba(0,212,232,0.4)}
+.plan-badge{
+  position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  background:var(--ice);color:var(--bg);
+  font-family:var(--mono);font-size:0.6rem;font-weight:700;
+  padding:0.2rem 0.8rem;border-radius:20px;
+  text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;
+}
+.plan-name{
+  font-family:var(--display);font-size:1.6rem;
+  letter-spacing:0.08em;margin-bottom:0.3rem;
+}
+.plan-sub{font-size:0.88rem;color:var(--text-dim);margin-bottom:1.5rem}
+.plan-price{
+  font-family:var(--display);font-size:2.4rem;
+  color:var(--ice);letter-spacing:0.02em;line-height:1;margin-bottom:0.2rem;
+}
+.plan-period{
+  font-family:var(--mono);font-size:0.68rem;
+  color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1.5rem;
+}
+.plan-feats{list-style:none;margin-bottom:1.8rem}
+.plan-feats li{
+  font-size:0.9rem;color:var(--text-dim);
+  padding:0.35rem 0;border-bottom:1px solid var(--border);
+  display:flex;gap:0.6rem;align-items:center;
+}
+.plan-feats li:last-child{border:none}
+.plan-feats .y{color:var(--green);font-size:0.8rem}
+.plan-feats .n{color:var(--text-faint);font-size:0.8rem}
+.plan-btn{
+  display:block;text-align:center;
+  padding:0.7rem;border-radius:4px;
+  font-family:var(--ui);font-size:0.8rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.05em;
+  text-decoration:none;transition:all 0.2s;
+  border:1px solid var(--border2);color:var(--text-dim);
+}
+.plan-btn:hover{border-color:var(--ice);color:var(--ice)}
+.plan-btn.hot{background:var(--ice);color:var(--bg);border-color:var(--ice)}
+.plan-btn.hot:hover{background:#1de3f8}
+
+/* ─── SAVINGS ─── */
+.savings-grid{
+  display:grid;grid-template-columns:1.1fr 1fr;gap:4rem;align-items:center;
+}
+.sv-panel{
+  background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:2rem;
+}
+.sv-panel-title{
+  font-family:var(--mono);font-size:0.62rem;
+  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:1.5rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.sv-panel-title span{color:var(--text-faint)}
+.sv-bars{display:flex;flex-direction:column;gap:1.2rem}
+.sv-bar-row{}
+.sv-bar-meta{
+  display:flex;justify-content:space-between;
+  font-size:0.88rem;margin-bottom:0.4rem;
+}
+.sv-bar-meta strong{color:var(--text);font-weight:600}
+.sv-bar-meta .val{font-family:var(--mono)}
+.sv-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.sv-fill{height:100%;border-radius:4px}
+.sv-fill.bad{background:linear-gradient(90deg,var(--warn),rgba(255,95,58,0.6));width:88%}
+.sv-fill.good{background:linear-gradient(90deg,var(--ice),var(--green));width:34%}
+.sv-savings-box{
+  margin-top:1.5rem;
+  padding:1rem 1.2rem;
+  background:rgba(29,233,155,0.05);
+  border:1px solid rgba(29,233,155,0.15);border-radius:6px;
+}
+.sv-savings-label{
+  font-family:var(--mono);font-size:0.6rem;
+  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;
+}
+.sv-savings-num{
+  font-family:var(--display);font-size:2rem;
+  color:var(--green);letter-spacing:0.03em;
+}
+.sv-savings-sub{font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem}
+
+.sv-text h3{
+  font-family:var(--display);font-size:2.4rem;
+  letter-spacing:0.02em;margin-bottom:1.5rem;line-height:1.05;
+}
+.sv-point{
+  display:flex;gap:0.9rem;align-items:flex-start;margin-bottom:1.4rem;
+}
+.sv-pip{
+  width:32px;height:32px;
+  background:var(--ice-glow2);border:1px solid rgba(0,212,232,0.15);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;flex-shrink:0;
+}
+.sv-point h4{font-size:0.88rem;font-weight:700;margin-bottom:0.2rem}
+.sv-point p{font-size:0.8rem;color:var(--text-dim);line-height:1.55}
+
+/* ─── ROADMAP ─── */
+.rm-bg{background:var(--s1)}
+.rm-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;
+}
+.rm-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:1.4rem;
+}
+.rm-icon{
+  font-size:1.3rem;
+  width:38px;height:38px;
+  background:var(--s2);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:0.8rem;
+}
+.rm-card h4{font-size:1rem;font-weight:700;margin-bottom:0.35rem}
+.rm-card p{font-size:0.85rem;color:var(--text-dim);line-height:1.55}
+.rm-phase{
+  display:inline-block;margin-top:0.7rem;
+  font-family:var(--mono);font-size:0.58rem;
+  padding:0.15rem 0.5rem;border-radius:3px;
+  text-transform:uppercase;letter-spacing:0.08em;
+}
+.rm-phase.live{background:rgba(0,212,232,0.08);border:1px solid rgba(0,212,232,0.2);color:var(--ice)}
+.rm-phase.soon{background:rgba(29,233,155,0.06);border:1px solid rgba(29,233,155,0.15);color:var(--green)}
+.rm-phase.future{background:rgba(255,95,58,0.05);border:1px solid rgba(255,95,58,0.12);color:var(--warn)}
+
+/* ─── CONTACT ─── */
+.contact-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;
+}
+.ctinfo h2{
+  font-family:var(--display);font-size:3rem;
+  letter-spacing:0.03em;margin-bottom:1rem;
+}
+.ctinfo p{font-size:0.88rem;color:var(--text-dim);line-height:1.75;margin-bottom:2rem}
+.ctitem{
+  display:flex;gap:0.9rem;align-items:center;
+  padding:0.9rem 0;border-bottom:1px solid var(--border);
+}
+.ctitem:last-child{border:none}
+.ct-icon{font-size:1.1rem;width:34px;text-align:center}
+.ct-text label{
+  font-family:var(--mono);font-size:0.6rem;
+  color:var(--text-faint);text-transform:uppercase;
+  letter-spacing:0.1em;display:block;
+}
+.ct-text span{font-size:1rem;color:var(--text)}
+
+.ctform{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:10px;padding:2rem;
+  position:relative;overflow:hidden;
+}
+.ctform::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--ice),transparent);
+  opacity:0.5;
+}
+.ctform-title{
+  font-family:var(--display);font-size:1.5rem;
+  letter-spacing:0.05em;margin-bottom:1.5rem;
+}
+.fg{margin-bottom:0.9rem}
+.fg label{
+  font-family:var(--mono);font-size:0.72rem;
+  color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:0.1em;display:block;margin-bottom:0.35rem;
+}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;padding:0.8rem 0.9rem;
+  color:var(--text);font-family:var(--ui);font-size:0.95rem;
+  outline:none;transition:border-color 0.2s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--ice)}
+.fg select option{background:var(--s1)}
+.fg textarea{resize:vertical;min-height:80px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem}
+.ctsub{
+  width:100%;background:var(--ice);color:var(--bg);border:none;
+  padding:0.85rem;border-radius:4px;
+  font-family:var(--ui);font-weight:700;font-size:0.85rem;
+  text-transform:uppercase;letter-spacing:0.07em;
+  cursor:pointer;transition:all 0.2s;margin-top:0.4rem;
+}
+.ctsub:hover{background:#1de3f8;transform:translateY(-1px)}
+
+/* ─── FOOTER ─── */
+footer{
+  background:var(--s1);border-top:1px solid var(--border);
+  padding:3rem 5vw 2rem;
+}
+.ft{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.ft-brand .logo{margin-bottom:0.7rem;font-size:1.3rem}
+.ft-brand p{font-size:0.78rem;color:var(--text-faint);max-width:240px;line-height:1.6}
+.ft-col h5{
+  font-family:var(--mono);font-size:0.6rem;
+  color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:0.12em;margin-bottom:0.9rem;
+}
+.ft-col a{
+  display:block;font-size:0.78rem;color:var(--text-faint);
+  text-decoration:none;padding:0.22rem 0;transition:color 0.2s;
+}
+.ft-col a:hover{color:var(--ice)}
+.fb{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;
+  font-family:var(--mono);font-size:0.65rem;color:var(--text-faint);
+}
+.fb span{color:var(--ice)}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1024px){
+  .hero{grid-template-columns:1fr;padding-bottom:3rem}
+  .hero-right{display:none}
+  .srv2-grid{grid-template-columns:1fr 1fr}
+  .plans-grid{grid-template-columns:1fr}
+  .rm-grid{grid-template-columns:1fr 1fr}
+  .savings-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .srv2-grid{grid-template-columns:1fr}
+  .rm-grid{grid-template-columns:1fr}
+  .hero-kpis{flex-direction:column;gap:1rem}
+  .fg-row{grid-template-columns:1fr}
+  nav{padding:0 4vw}
+  .nav-links{display:none}
+  section{padding:4rem 4vw}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    FRIGO<span>SENSE</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#planes">Planes</a></li>
+    <li><a href="#ahorro">Ahorro</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="#contacto" class="nav-cta">Diagnóstico gratis →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="pulse-dot"></div>
+      IoT · Mantenimiento Predictivo · Santiago
+    </div>
+
+    <h1>
+      TUS EQUIPOS<br>
+      DE FRÍO<br>
+      <span class="hl">BAJO</span> <span class="dim">CONTROL</span>
+    </h1>
+
+    <p class="hero-desc">
+      Sensores en tus frigoríficos, datos reales, técnicos en terreno. Sin que tengas que gestionar nada.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#contacto" class="btn-p">Solicitar diagnóstico</a>
+      <a href="#servicios" class="btn-g">Ver servicios →</a>
+    </div>
+
+    <div class="hero-kpis">
+      <div class="kpi-item">
+        <div class="kpi-val">7</div>
+        <div class="kpi-label">días de<br>diagnóstico</div>
+      </div>
+      <div class="kpi-div"></div>
+      <div class="kpi-item">
+        <div class="kpi-val">24/7</div>
+        <div class="kpi-label">monitoreo<br>remoto</div>
+      </div>
+      <div class="kpi-div"></div>
+      <div class="kpi-item">
+        <div class="kpi-val">−40%</div>
+        <div class="kpi-label">consumo<br>eléctrico</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIGITAL TWIN DASHBOARD -->
+  <div class="hero-right">
+    <div class="dt-shell">
+
+      <!-- Topbar -->
+      <div class="dt-topbar">
+        <div class="dt-title">Digital Twin — Equipo 01</div>
+        <div class="dt-topright">
+          <div class="dt-timestamp" id="dt-clock">--:--:--</div>
+          <div class="dt-status">Online · Sync 2s</div>
+        </div>
+      </div>
+
+      <!-- Tab selector -->
+      <div class="dt-tabs">
+        <button class="dt-tab active" onclick="dtTab(this,'view')">Vista general</button>
+        <button class="dt-tab" onclick="dtTab(this,'history')">Historial 7d</button>
+        <button class="dt-tab" onclick="dtTab(this,'report')">Informe</button>
+      </div>
+
+      <!-- Vista general -->
+      <div id="dt-view">
+        <!-- Mini KPIs -->
+        <div class="dt-mini-metrics">
+          <div class="dt-mini-m">
+            <div class="dt-mini-label">Temp. int.</div>
+            <div class="dt-mini-val ok" id="mm-temp">4.2°C</div>
+          </div>
+          <div class="dt-mini-m">
+            <div class="dt-mini-label">Compresor</div>
+            <div class="dt-mini-val warn" id="mm-comp">87.3°C</div>
+          </div>
+          <div class="dt-mini-m">
+            <div class="dt-mini-label">Consumo</div>
+            <div class="dt-mini-val caution" id="mm-kwh">3.41kWh</div>
+          </div>
+        </div>
+
+        <!-- Blueprint SVG -->
+        <div class="dt-blueprint">
+          <svg class="fridge-svg" id="fridge-svg" viewBox="0 0 160 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="10" width="120" height="170" rx="8" fill="rgba(13,18,25,0.8)" stroke="rgba(0,212,232,0.4)" stroke-width="1.5"/>
+            <rect x="26" y="16" width="108" height="45" rx="4" fill="rgba(0,212,232,0.03)" stroke="rgba(0,212,232,0.25)" stroke-width="1"/>
+            <rect x="26" y="67" width="108" height="107" rx="4" fill="rgba(0,212,232,0.03)" stroke="rgba(0,212,232,0.2)" stroke-width="1"/>
+            <line x1="20" y1="64" x2="140" y2="64" stroke="rgba(0,212,232,0.35)" stroke-width="1.5"/>
+            <rect x="110" y="28" width="18" height="5" rx="2.5" fill="rgba(0,212,232,0.3)" stroke="rgba(0,212,232,0.5)" stroke-width="1"/>
+            <rect x="110" y="100" width="18" height="6" rx="3" fill="rgba(0,212,232,0.3)" stroke="rgba(0,212,232,0.5)" stroke-width="1"/>
+            <line x1="30" y1="100" x2="130" y2="100" stroke="rgba(0,212,232,0.12)" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="30" y1="130" x2="130" y2="130" stroke="rgba(0,212,232,0.12)" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="30" y1="155" x2="130" y2="155" stroke="rgba(0,212,232,0.12)" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- Compressor block — color changes with JS -->
+            <rect id="comp-rect" x="50" y="172" width="60" height="6" rx="3" fill="rgba(255,95,58,0.2)" stroke="rgba(255,95,58,0.5)" stroke-width="1"/>
+            <circle id="sens-freeze" cx="45" cy="38" r="3" fill="var(--ice)" opacity="0.8">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle id="sens-fridge" cx="45" cy="90" r="3" fill="var(--green)" opacity="0.8">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Signal lines -->
+            <line x1="80" y1="10" x2="80" y2="0" stroke="rgba(0,212,232,0.3)" stroke-width="1" stroke-dasharray="2 2"/>
+            <line x1="140" y1="90" x2="158" y2="90" stroke="rgba(0,212,232,0.3)" stroke-width="1" stroke-dasharray="2 2"/>
+            <line x1="20" y1="90" x2="2" y2="90" stroke="rgba(0,212,232,0.3)" stroke-width="1" stroke-dasharray="2 2"/>
+            <!-- Grid overlay -->
+            <line x1="20" y1="40" x2="140" y2="40" stroke="rgba(0,212,232,0.06)" stroke-width="0.5"/>
+            <line x1="60" y1="10" x2="60" y2="180" stroke="rgba(0,212,232,0.06)" stroke-width="0.5"/>
+            <line x1="100" y1="10" x2="100" y2="180" stroke="rgba(0,212,232,0.06)" stroke-width="0.5"/>
+            <text x="30" y="33" font-family="JetBrains Mono" font-size="7" fill="rgba(0,212,232,0.5)">FREEZER</text>
+            <text x="30" y="82" font-family="JetBrains Mono" font-size="7" fill="rgba(0,212,232,0.5)">REFRIGERADOR</text>
+            <text x="35" y="185" font-family="JetBrains Mono" font-size="7" fill="rgba(255,95,58,0.7)">COMPRESOR ↑</text>
+          </svg>
+
+          <!-- Floating data nodes -->
+          <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 400 260">
+            <rect x="5" y="60" width="92" height="36" rx="4" fill="rgba(13,18,25,0.95)" stroke="rgba(0,212,232,0.3)" stroke-width="1"/>
+            <text x="12" y="74" font-family="JetBrains Mono" font-size="7" fill="rgba(0,212,232,0.6)">TEMP INT.</text>
+            <text id="sv-temp" x="12" y="88" font-family="JetBrains Mono" font-size="12" font-weight="500" fill="#1de99b">4.2 °C</text>
+            <line x1="97" y1="78" x2="130" y2="120" stroke="rgba(0,212,232,0.2)" stroke-width="1" stroke-dasharray="2 2"/>
+
+            <rect x="302" y="58" width="92" height="36" rx="4" fill="rgba(13,18,25,0.95)" stroke="rgba(255,95,58,0.4)" stroke-width="1"/>
+            <text x="310" y="72" font-family="JetBrains Mono" font-size="7" fill="rgba(255,95,58,0.7)">COMPRESOR</text>
+            <text id="sv-comp" x="310" y="86" font-family="JetBrains Mono" font-size="12" font-weight="500" fill="#ff5f3a">87.3 °C</text>
+            <line x1="302" y1="76" x2="268" y2="118" stroke="rgba(255,95,58,0.2)" stroke-width="1" stroke-dasharray="2 2"/>
+
+            <rect x="148" y="4" width="100" height="36" rx="4" fill="rgba(13,18,25,0.95)" stroke="rgba(240,180,41,0.35)" stroke-width="1"/>
+            <text x="158" y="18" font-family="JetBrains Mono" font-size="7" fill="rgba(240,180,41,0.7)">CONSUMO</text>
+            <text id="sv-kwh" x="158" y="34" font-family="JetBrains Mono" font-size="12" font-weight="500" fill="#f0b429">3.41 kWh</text>
+            <line x1="198" y1="40" x2="198" y2="50" stroke="rgba(240,180,41,0.2)" stroke-width="1" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+
+        <!-- Data rows — clicables -->
+        <div class="dt-rows">
+          <div class="dt-row" onclick="toggleRow(this)">
+            <span class="dt-row-label">Temperatura interior</span>
+            <span class="dt-row-val ok" id="row-temp">4.2 °C</span>
+            <div class="dt-bar-wrap"><div class="dt-bar-fill fill-ok" id="bar-temp" style="width:25%"></div></div>
+            <div class="dt-row-detail">
+              Rango operativo: −2 °C a +8 °C · Estado: <span style="color:var(--green)">NORMAL</span> · Umbral de alerta: &gt;8 °C
+              <div class="dt-sparkline" id="sp-temp"></div>
+            </div>
+          </div>
+          <div class="dt-row" onclick="toggleRow(this)">
+            <span class="dt-row-label">Temp. compresor</span>
+            <span class="dt-row-val warn" id="row-comp">87.3 °C ↑</span>
+            <div class="dt-bar-wrap"><div class="dt-bar-fill fill-warn" id="bar-comp" style="width:87%"></div></div>
+            <div class="dt-row-detail">
+              Rango operativo: 50–85 °C · Estado: <span style="color:var(--warn)">SOBRE UMBRAL</span> · Riesgo de falla: alto
+              <div class="dt-sparkline" id="sp-comp"></div>
+            </div>
+          </div>
+          <div class="dt-row" onclick="toggleRow(this)">
+            <span class="dt-row-label">Consumo eléctrico</span>
+            <span class="dt-row-val caution" id="row-kwh">3.41 kWh</span>
+            <div class="dt-bar-wrap"><div class="dt-bar-fill fill-caution" id="bar-kwh" style="width:65%"></div></div>
+            <div class="dt-row-detail">
+              Consumo esperado: ~2.1 kWh · Exceso estimado: +62% · Causa probable: condensador sucio
+              <div class="dt-sparkline" id="sp-kwh"></div>
+            </div>
+          </div>
+          <div class="dt-row" onclick="toggleRow(this)">
+            <span class="dt-row-label">Estado de gas</span>
+            <span class="dt-row-val ok" id="row-gas">Normal</span>
+            <div class="dt-bar-wrap"><div class="dt-bar-fill fill-ice" id="bar-gas" style="width:40%"></div></div>
+            <div class="dt-row-detail">
+              Presión línea: 8.2 bar · Rango normal: 7–10 bar · Sin fugas detectadas
+              <div class="dt-sparkline" id="sp-gas"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dt-alert">
+          <div class="alert-pip"></div>
+          <span><strong>ALERTA:</strong> temperatura de compresor sobre umbral (85 °C). Riesgo de falla en 48–72h. Mantenimiento recomendado.</span>
+        </div>
+      </div><!-- /dt-view -->
+
+      <!-- Historial 7d -->
+      <div id="dt-history" style="display:none">
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:0.8rem;text-transform:uppercase;letter-spacing:0.1em">Temperatura compresor — últimos 7 días</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:90px;margin-bottom:1rem" id="hist-chart"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;font-family:var(--mono);font-size:0.65rem">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:0.6rem">
+            <div style="color:var(--text-faint);font-size:0.58rem;margin-bottom:0.2rem">MÁXIMA SEMANA</div>
+            <div style="color:var(--warn);font-size:1.1rem">91.4°C</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:0.6rem">
+            <div style="color:var(--text-faint);font-size:0.58rem;margin-bottom:0.2rem">PROMEDIO</div>
+            <div style="color:var(--yellow);font-size:1.1rem">84.7°C</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:0.6rem">
+            <div style="color:var(--text-faint);font-size:0.58rem;margin-bottom:0.2rem">TENDENCIA</div>
+            <div style="color:var(--warn);font-size:1.1rem">↑ +2.1°C</div>
+          </div>
+        </div>
+        <div style="margin-top:0.8rem;font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);line-height:1.6">
+          La temperatura del compresor muestra tendencia ascendente sostenida durante 5 días. Se detectó un incremento de +2.1°C respecto al promedio de la semana anterior.
+        </div>
+      </div>
+
+      <!-- Informe -->
+      <div id="dt-report" style="display:none">
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em">Resumen diagnóstico · Equipo 01</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:0.68rem">
+            <span style="color:var(--text-dim)">Estado general</span>
+            <span style="color:var(--warn);font-weight:500">⚠ REQUIERE ATENCIÓN</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:0.68rem">
+            <span style="color:var(--text-dim)">Mantención preventiva estimada</span>
+            <span style="color:var(--ice)">En &lt;48h</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:0.68rem">
+            <span style="color:var(--text-dim)">Exceso de consumo eléctrico</span>
+            <span style="color:var(--yellow)">+62% (~$9.400/mes)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:0.68rem">
+            <span style="color:var(--text-dim)">Fugas de gas detectadas</span>
+            <span style="color:var(--green)">No</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:0.68rem">
+            <span style="color:var(--text-dim)">Acción recomendada</span>
+            <span style="color:var(--warn)">Limpieza condensador + revisión compresor</span>
+          </div>
+        </div>
+        <div style="margin-top:0.8rem;text-align:center">
+          <a href="#contacto" style="display:inline-block;background:var(--ice);color:var(--bg);padding:0.6rem 1.4rem;border-radius:4px;font-family:var(--mono);font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none">Agendar mantención →</a>
+        </div>
+      </div>
+
+    </div><!-- /dt-shell -->
+  </div>
+</section>
+
+<!-- FLUJO DE DATOS -->
+<section class="flow" id="como-funciona">
+  <div class="stag">Arquitectura</div>
+  <h2 class="sh">CÓMO FLUYEN LOS DATOS</h2>
+  <p class="sdesc">Del sensor al técnico en terreno, automático y trazable.</p>
+
+  <div class="flow-diagram">
+    <div class="flow-node">
+      <div class="fn-icon active">🌡️</div>
+      <div class="fn-label">Sensores IoT</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-data">RF/WiFi</div>
+    </div>
+    <div class="flow-node">
+      <div class="fn-icon active">📡</div>
+      <div class="fn-label">Gateway local</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-data">MQTT</div>
+    </div>
+    <div class="flow-node">
+      <div class="fn-icon active">☁️</div>
+      <div class="fn-label">Plataforma cloud</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-data">API</div>
+    </div>
+    <div class="flow-node">
+      <div class="fn-icon active">📊</div>
+      <div class="fn-label">Dashboard análisis</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-data">Alerta</div>
+    </div>
+    <div class="flow-node">
+      <div class="fn-icon">💬</div>
+      <div class="fn-label">WhatsApp</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-data">Coord.</div>
+    </div>
+    <div class="flow-node">
+      <div class="fn-icon">🔧</div>
+      <div class="fn-label">Técnico en terreno</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section id="servicios">
+  <div class="stag">Servicios</div>
+  <div class="srv-intro">
+    <div>
+      <h2 class="sh" style="margin-bottom:0.4rem">LO QUE HACEMOS</h2>
+      <p class="sdesc" style="margin-bottom:0">Sin intermediarios. Sin gestión de tu parte.</p>
+    </div>
+    <div class="srv-intro-hint">Haz clic en cualquier servicio para ver el detalle</div>
+  </div>
+
+  <div class="srv2-grid">
+
+    <!-- 01 Diagnóstico -->
+    <div class="srv2-card ice-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico ice">🔍</div>
+        <div class="srv2-head">
+          <div class="srv2-label ice">Diagnóstico · 7 días</div>
+          <div class="srv2-title">¿Cómo está tu equipo realmente?</div>
+          <div class="srv2-tagline">Instalamos sensores, medimos una semana y te entregamos un informe con el estado real y cuánto podrías ahorrar.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items ice">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Temperatura interior y compresor en tiempo real</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Consumo eléctrico real por equipo</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Detección de fugas de gas refrigerante</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Informe PDF con recomendaciones priorizadas</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Proyección de ahorro mensual en pesos</div>
+          </div>
+          <a href="#contacto" class="srv2-cta">Solicitar diagnóstico →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Monitoreo -->
+    <div class="srv2-card grn-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico grn">📡</div>
+        <div class="srv2-head">
+          <div class="srv2-label grn">Monitoreo · 24/7</div>
+          <div class="srv2-title">Tus equipos vigilados mientras vendes</div>
+          <div class="srv2-tagline">Sensores permanentes + alertas por WhatsApp. Sabrás de una falla antes de que te cueste plata.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items grn">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Sensores instalados de forma permanente</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Dashboard con datos en tiempo real</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Alertas por WhatsApp ante anomalías</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Informes mensuales de desempeño</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Historial completo de cada equipo</div>
+          </div>
+          <a href="#planes" class="srv2-cta">Ver planes →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Preventivo -->
+    <div class="srv2-card ice-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico ice">🔧</div>
+        <div class="srv2-head">
+          <div class="srv2-label ice">Preventivo · en terreno</div>
+          <div class="srv2-title">Mantención antes de que falle</div>
+          <div class="srv2-tagline">Llegamos con repuestos y hacemos el trabajo. Sin que tengas que buscar técnicos, cotizar ni coordinar nada.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items ice">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Limpieza de condensadores y evaporadores</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Verificación y carga de gas refrigerante</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Cambio de sellos, juntas y filtros</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Registro fotográfico y trazabilidad completa</div>
+          </div>
+          <a href="#contacto" class="srv2-cta">Agendar mantención →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Correctivo -->
+    <div class="srv2-card red-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico red">⚡</div>
+        <div class="srv2-head">
+          <div class="srv2-label red">Correctivo · urgente</div>
+          <div class="srv2-title">Tu equipo falló. Respondemos en ≤24h</div>
+          <div class="srv2-tagline">Técnico y repuestos en mano. Si necesitas un equipo de reemplazo mientras dura la reparación, también lo tenemos.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items red">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Diagnóstico y reparación en terreno</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Repuestos originales o equivalentes</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Garantía sobre el trabajo ejecutado</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Equipo de reemplazo en arriendo si es necesario</div>
+          </div>
+          <a href="#contacto" class="srv2-cta" style="color:var(--warn)">Contactar urgencia →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Eficiencia -->
+    <div class="srv2-card grn-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico grn">⚡</div>
+        <div class="srv2-head">
+          <div class="srv2-label grn">Eficiencia · eléctrica</div>
+          <div class="srv2-title">¿Cuánto estás pagando de más en luz?</div>
+          <div class="srv2-tagline">Medimos el consumo real de cada equipo y te decimos exactamente cuánto puedes ahorrar con mantención o reemplazo.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items grn">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Consumo real por equipo (kWh)</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Costo mensual estimado por equipo en pesos</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Ahorro proyectado tras intervención</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Recomendación de reemplazo si aplica</div>
+          </div>
+          <a href="#ahorro" class="srv2-cta">Ver simulación de ahorro →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 Llave en mano -->
+    <div class="srv2-card ice-type" onclick="toggleSrv(this)">
+      <div class="srv2-face">
+        <div class="srv2-ico ice">🗝</div>
+        <div class="srv2-head">
+          <div class="srv2-label ice">Llave en mano · gestión total</div>
+          <div class="srv2-title">Olvídate de todo. Nosotros manejamos tu flota</div>
+          <div class="srv2-tagline">Diagnóstico, repuestos, agenda, ejecución y reporte mensual. Tú solo recibes el informe.</div>
+        </div>
+      </div>
+      <div class="srv2-toggle">▾</div>
+      <div class="srv2-detail">
+        <div class="srv2-detail-inner">
+          <div class="srv2-items ice">
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Calendario de mantención gestionado por nosotros</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Compra y bodegaje de repuestos críticos</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Coordinación directa con tu local</div>
+            <div class="srv2-item"><div class="srv2-item-dot"></div>Reporte mensual consolidado de toda tu flota</div>
+          </div>
+          <a href="#planes" class="srv2-cta">Ver plan Anual →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PLANES -->
+<section class="plans-bg" id="planes">
+  <div class="stag">Planes</div>
+  <h2 class="sh">ELIGE TU PLAN</h2>
+  <p class="sdesc">Desde un diagnóstico puntual hasta monitoreo permanente con mantención incluida.</p>
+
+  <div class="plans-grid">
+    <div class="plan">
+      <div class="plan-name">DIAGNÓSTICO</div>
+      <div class="plan-sub">Ideal para conocer el estado real de tus equipos por primera vez</div>
+      <div class="plan-price">Consultar</div>
+      <div class="plan-period">precio según N° de equipos</div>
+      <ul class="plan-feats">
+        <li><span class="y">✓</span> Sensores 7 días</li>
+        <li><span class="y">✓</span> Informe técnico PDF</li>
+        <li><span class="y">✓</span> Proyección de ahorro</li>
+        <li><span class="y">✓</span> Recomendaciones priorizadas</li>
+        <li><span class="n">—</span> Monitoreo continuo</li>
+        <li><span class="n">—</span> Alertas automáticas</li>
+        <li><span class="n">—</span> Mantención incluida</li>
+      </ul>
+      <a href="#contacto" class="plan-btn">Solicitar →</a>
+    </div>
+    <div class="plan hot">
+      <div class="plan-badge">Más popular</div>
+      <div class="plan-name">SEMESTRAL</div>
+      <div class="plan-sub">Monitoreo continuo + 2 mantenciones preventivas</div>
+      <div class="plan-price">Consultar</div>
+      <div class="plan-period">precio según flota · 6 meses</div>
+      <ul class="plan-feats">
+        <li><span class="y">✓</span> Sensores permanentes</li>
+        <li><span class="y">✓</span> Dashboard tiempo real</li>
+        <li><span class="y">✓</span> Alertas WhatsApp</li>
+        <li><span class="y">✓</span> 2 mantenciones preventivas</li>
+        <li><span class="y">✓</span> Informes mensuales</li>
+        <li><span class="n">—</span> Prioridad urgencias 24h</li>
+        <li><span class="n">—</span> Equipo de reemplazo</li>
+      </ul>
+      <a href="#contacto" class="plan-btn hot">Solicitar →</a>
+    </div>
+    <div class="plan">
+      <div class="plan-name">ANUAL</div>
+      <div class="plan-sub">Servicio completo: monitoreo + mantenciones + gestión total</div>
+      <div class="plan-price">Consultar</div>
+      <div class="plan-period">precio según flota · 12 meses</div>
+      <ul class="plan-feats">
+        <li><span class="y">✓</span> Todo el plan Semestral</li>
+        <li><span class="y">✓</span> 4 mantenciones preventivas</li>
+        <li><span class="y">✓</span> Prioridad urgencias ≤24h</li>
+        <li><span class="y">✓</span> Gestión de repuestos</li>
+        <li><span class="y">✓</span> Historial completo de flota</li>
+        <li><span class="y">✓</span> Equipo de reemplazo en arriendo</li>
+        <li><span class="y">✓</span> Gestión total llave en mano</li>
+      </ul>
+      <a href="#contacto" class="plan-btn">Solicitar →</a>
+    </div>
+  </div>
+</section>
+
+<!-- AHORRO -->
+<section id="ahorro">
+  <div class="stag">Propuesta de valor</div>
+  <h2 class="sh">CUÁNTO PUEDES AHORRAR</h2>
+  <p class="sdesc">Un frigorífico mal mantenido puede consumir hasta 60% más de electricidad. Eso se traduce directo en tu factura mensual.</p>
+
+  <div class="savings-grid">
+    <div class="sv-panel">
+      <div class="sv-panel-title">
+        <span>// Consumo — Frigorífico vertical 400L</span>
+        <span>Estimación referencial</span>
+      </div>
+      <div class="sv-bars">
+        <div class="sv-bar-row">
+          <div class="sv-bar-meta">
+            <strong>Sin mantención · condensador sucio + fuga leve</strong>
+            <span class="val" style="color:var(--warn)">~$28.000/mes</span>
+          </div>
+          <div class="sv-track"><div class="sv-fill bad"></div></div>
+        </div>
+        <div class="sv-bar-row">
+          <div class="sv-bar-meta">
+            <strong>Con mantención preventiva correcta</strong>
+            <span class="val" style="color:var(--green)">~$11.500/mes</span>
+          </div>
+          <div class="sv-track"><div class="sv-fill good"></div></div>
+        </div>
+      </div>
+      <div class="sv-savings-box">
+        <div class="sv-savings-label">Ahorro potencial anual · 4 equipos</div>
+        <div class="sv-savings-num">$792.000</div>
+        <div class="sv-savings-sub">~$16.500/mes por equipo × 4 equipos × 12 meses</div>
+      </div>
+    </div>
+
+    <div class="sv-text">
+      <h3>NO ES SOLO MANTENCIÓN.<br>ES RENTABILIDAD.</h3>
+      <div class="sv-point">
+        <div class="sv-pip">⚡</div>
+        <div>
+          <h4>Hasta −40% en electricidad</h4>
+          <p>Condensadores sucios y fugas de gas disparan la cuenta. Los detectamos antes.</p>
+        </div>
+      </div>
+      <div class="sv-point">
+        <div class="sv-pip">🛡</div>
+        <div>
+          <h4>Sin pérdidas de producto</h4>
+          <p>Alertas a tiempo antes de que una falla arruine tu stock.</p>
+        </div>
+      </div>
+      <div class="sv-point">
+        <div class="sv-pip">⏱</div>
+        <div>
+          <h4>Cero gestión de tu parte</h4>
+          <p>Repuestos, agenda y técnico: todo lo manejamos nosotros.</p>
+        </div>
+      </div>
+      <div class="sv-point">
+        <div class="sv-pip">📈</div>
+        <div>
+          <h4>Datos para decidir</h4>
+          <p>¿Reparar o reemplazar? Te lo decimos con números reales.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="rm-bg" id="roadmap">
+  <div class="stag">Roadmap</div>
+  <h2 class="sh">SIEMPRE MEJORANDO</h2>
+  <p class="sdesc">Funcionalidades actuales y próximas incorporaciones al servicio.</p>
+
+  <div class="rm-grid">
+    <div class="rm-card">
+      <div class="rm-icon">💬</div>
+      <h4>Alertas por WhatsApp</h4>
+      <p>Notificación inmediata ante temperatura, presión o consumo fuera de rango.</p>
+      <span class="rm-phase live">Disponible</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">🔌</div>
+      <h4>Equipo de reemplazo</h4>
+      <p>Equipo en arriendo mientras el tuyo está en reparación. Sin parar la operación.</p>
+      <span class="rm-phase live">Disponible</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">📋</div>
+      <h4>Historial trazable</h4>
+      <p>Cada intervención registrada con fecha, técnico y repuestos.</p>
+      <span class="rm-phase live">Disponible</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">📱</div>
+      <h4>Panel de cliente online</h4>
+      <p>Acceso web para ver el estado de tus equipos y próximas mantenciones.</p>
+      <span class="rm-phase soon">En desarrollo</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">🤖</div>
+      <h4>Mantenimiento predictivo</h4>
+      <p>Modelos ML entrenados con datos históricos para anticipar fallas.</p>
+      <span class="rm-phase soon">Próximamente</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">⚡</div>
+      <h4>Informe de eficiencia</h4>
+      <p>Documento formal para distribuidoras o beneficios energéticos.</p>
+      <span class="rm-phase future">Futuro</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">🔁</div>
+      <h4>Reposición programada</h4>
+      <p>Asesoría y condiciones especiales para equipos al final de su vida útil.</p>
+      <span class="rm-phase future">Futuro</span>
+    </div>
+    <div class="rm-card">
+      <div class="rm-icon">🏪</div>
+      <h4>Servicio multi-local</h4>
+      <p>Una sola pantalla para gestionar toda tu flota de locales.</p>
+      <span class="rm-phase future">Futuro</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <div class="stag">Contacto</div>
+  <div class="contact-grid">
+    <div class="ctinfo">
+      <h2>HABLEMOS</h2>
+      <p>¿Cuántos equipos tienes? ¿Cuándo fue la última mantención? No importa el punto de partida, lo evaluamos sin costo.</p>
+      <div class="ctitem">
+        <span class="ct-icon">📍</span>
+        <div class="ct-text">
+          <label>Zona de servicio</label>
+          <span>Región Metropolitana, Santiago</span>
+        </div>
+      </div>
+      <div class="ctitem">
+        <span class="ct-icon">📱</span>
+        <div class="ct-text">
+          <label>WhatsApp / Teléfono</label>
+          <span>+56 9 XXXX XXXX</span>
+        </div>
+      </div>
+      <div class="ctitem">
+        <span class="ct-icon">✉️</span>
+        <div class="ct-text">
+          <label>Email</label>
+          <span>contacto@frigosense.cl</span>
+        </div>
+      </div>
+      <div class="ctitem">
+        <span class="ct-icon">🕐</span>
+        <div class="ct-text">
+          <label>Tiempo de respuesta</label>
+          <span>Menos de 24h hábiles</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctform">
+      <div class="ctform-title">SOLICITAR DIAGNÓSTICO</div>
+      <div class="fg-row">
+        <div class="fg">
+          <label>Nombre / Local</label>
+          <input type="text" placeholder="Botillería Los Aromos">
+        </div>
+        <div class="fg">
+          <label>Teléfono</label>
+          <input type="tel" placeholder="+56 9 XXXX XXXX">
+        </div>
+      </div>
+      <div class="fg">
+        <label>¿Cuántos equipos de frío tienes?</label>
+        <select>
+          <option value="">Selecciona...</option>
+          <option>1–2 equipos</option>
+          <option>3–5 equipos</option>
+          <option>6–10 equipos</option>
+          <option>Más de 10</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>¿Qué necesitas?</label>
+        <select>
+          <option value="">Selecciona...</option>
+          <option>Diagnóstico inicial (7 días)</option>
+          <option>Mantención preventiva</option>
+          <option>Reparación urgente</option>
+          <option>Suscripción de monitoreo</option>
+          <option>No sé, necesito orientación</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Comentario (opcional)</label>
+        <textarea placeholder="Ej: Tengo 3 cámaras verticales, la última mantención fue hace más de un año..."></textarea>
+      </div>
+      <button class="ctsub">Enviar solicitud →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft">
+    <div class="ft-brand">
+      <div class="logo"><div class="logo-dot"></div>FRIGO<span>SENSE</span></div>
+      <p>Monitoreo IoT y mantenimiento técnico de equipos de frío para botillerías y comercios. Santiago, Chile.</p>
+    </div>
+    <div class="ft-col">
+      <h5>Servicios</h5>
+      <a href="#servicios">Diagnóstico con sensores</a>
+      <a href="#servicios">Mantenimiento preventivo</a>
+      <a href="#servicios">Mantenimiento correctivo</a>
+      <a href="#servicios">Auditoría eléctrica</a>
+    </div>
+    <div class="ft-col">
+      <h5>Planes</h5>
+      <a href="#planes">Diagnóstico puntual</a>
+      <a href="#planes">Plan Semestral</a>
+      <a href="#planes">Plan Anual</a>
+    </div>
+    <div class="ft-col">
+      <h5>Contacto</h5>
+      <a href="#contacto">Solicitar diagnóstico</a>
+      <a href="#">WhatsApp</a>
+      <a href="mailto:contacto@frigosense.cl">Email</a>
+    </div>
+  </div>
+  <div class="fb">
+    <span>© 2025 FrigoSense · Todos los derechos reservados</span>
+    <span>Datos reales. Decisiones reales. <span>❄</span></span>
+  </div>
+</footer>
+
+<script>
+// ── Tab toggle de servicios ──
+function toggleSrv(card){
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.srv2-card.open').forEach(c=>c.classList.remove('open'));
+  if(!isOpen) card.classList.add('open');
+}
+
+// ── Tabs del Digital Twin ──
+function dtTab(btn, tab){
+  document.querySelectorAll('.dt-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['dt-view','dt-history','dt-report'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display = id===`dt-${tab}` ? 'block' : 'none';
+  });
+}
+
+// ── Toggle filas del panel ──
+function toggleRow(row){
+  const isExp = row.classList.contains('expanded');
+  document.querySelectorAll('.dt-row.expanded').forEach(r=>r.classList.remove('expanded'));
+  if(!isExp) row.classList.add('expanded');
+}
+
+// ── Reloj en tiempo real ──
+function updateClock(){
+  const now = new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const el=document.getElementById('dt-clock');
+  if(el) el.textContent=`${h}:${m}:${s}`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// ── Datos simulados en tiempo real ──
+let compTemp = 87.3;
+let intTemp  = 4.2;
+let kwh      = 3.41;
+let gasBar   = 40;
+let tick     = 0;
+
+function rnd(min,max){return Math.random()*(max-min)+min}
+function fmt(v,dec){return v.toFixed(dec)}
+
+function updatePanel(){
+  tick++;
+  // Compresor sube lentamente (simulando falla progresiva)
+  compTemp += rnd(-0.2, 0.45);
+  compTemp  = Math.max(83, Math.min(93, compTemp));
+
+  intTemp  += rnd(-0.15, 0.15);
+  intTemp   = Math.max(3.5, Math.min(5.2, intTemp));
+
+  kwh      += rnd(-0.04, 0.06);
+  kwh       = Math.max(3.1, Math.min(3.9, kwh));
+
+  gasBar   += rnd(-1, 1);
+  gasBar    = Math.max(35, Math.min(50, gasBar));
+
+  const compPct = Math.min(100, ((compTemp-50)/45)*100);
+  const tempPct = Math.min(100, ((intTemp+2)/12)*100);
+  const kwhPct  = Math.min(100, (kwh/4.5)*100);
+
+  // SVG floating nodes
+  const svTemp = document.getElementById('sv-temp');
+  const svComp = document.getElementById('sv-comp');
+  const svKwh  = document.getElementById('sv-kwh');
+  if(svTemp) svTemp.textContent = fmt(intTemp,1)+' °C';
+  if(svComp) svComp.textContent = fmt(compTemp,1)+' °C';
+  if(svKwh)  svKwh.textContent  = fmt(kwh,2)+' kWh';
+
+  // Mini KPIs
+  const mmTemp=document.getElementById('mm-temp');
+  const mmComp=document.getElementById('mm-comp');
+  const mmKwh =document.getElementById('mm-kwh');
+  if(mmTemp) mmTemp.textContent=fmt(intTemp,1)+'°C';
+  if(mmComp) mmComp.textContent=fmt(compTemp,1)+'°C';
+  if(mmKwh)  mmKwh.textContent =fmt(kwh,2)+'kWh';
+
+  // Row values
+  const rTemp=document.getElementById('row-temp');
+  const rComp=document.getElementById('row-comp');
+  const rKwh =document.getElementById('row-kwh');
+  const rGas =document.getElementById('row-gas');
+  if(rTemp) rTemp.textContent = fmt(intTemp,1)+' °C';
+  if(rComp) rComp.textContent = fmt(compTemp,1)+' °C ↑';
+  if(rKwh)  rKwh.textContent  = fmt(kwh,2)+' kWh';
+  if(rGas)  rGas.textContent  = 'Normal';
+
+  // Bars
+  const bTemp=document.getElementById('bar-temp');
+  const bComp=document.getElementById('bar-comp');
+  const bKwh =document.getElementById('bar-kwh');
+  const bGas =document.getElementById('bar-gas');
+  if(bTemp) bTemp.style.width=tempPct+'%';
+  if(bComp){
+    bComp.style.width=compPct+'%';
+    bComp.style.background = compTemp>90 ? '#ff2200' : compTemp>87 ? 'var(--warn)' : 'var(--yellow)';
+  }
+  if(bKwh) bKwh.style.width=kwhPct+'%';
+  if(bGas) bGas.style.width=gasBar+'%';
+
+  // Fridge glow changes with compressor temp
+  const fsvg=document.getElementById('fridge-svg');
+  if(fsvg) fsvg.classList.toggle('hot', compTemp>88);
+
+  // Compressor rect color
+  const cr=document.getElementById('comp-rect');
+  if(cr){
+    const intensity=Math.min(1,(compTemp-83)/10);
+    cr.setAttribute('fill',`rgba(255,${Math.floor(95*(1-intensity))},58,${0.15+intensity*0.35})`);
+    cr.setAttribute('stroke',`rgba(255,${Math.floor(95*(1-intensity))},58,${0.4+intensity*0.4})`);
+  }
+}
+
+setInterval(updatePanel, 2000);
+updatePanel();
+
+// ── Sparklines por fila ──
+function buildSparkline(id, heights, type){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML='';
+  heights.forEach(h=>{
+    const b=document.createElement('div');
+    b.className='sp-bar'+(type==='warn'&&h>70?' hi':type==='caution'&&h>55?' md':'');
+    b.style.height=h+'%';
+    el.appendChild(b);
+  });
+}
+buildSparkline('sp-temp',[22,24,23,25,22,24,25],'ok');
+buildSparkline('sp-comp',[72,75,78,80,84,88,91],'warn');
+buildSparkline('sp-kwh',[55,58,60,62,65,64,67],'caution');
+buildSparkline('sp-gas',[38,40,41,39,40,42,40],'ok');
+
+// ── Historial chart ──
+function buildHistChart(){
+  const el=document.getElementById('hist-chart');
+  if(!el) return;
+  const vals=[78,80,82,84,86,88,91];
+  const days=['L','M','X','J','V','S','D'];
+  vals.forEach((v,i)=>{
+    const col=document.createElement('div');
+    col.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;flex:1';
+    const bar=document.createElement('div');
+    const pct=((v-70)/25)*100;
+    const color=v>=88?'var(--warn)':v>=84?'var(--yellow)':'var(--ice)';
+    bar.style.cssText=`height:${pct}%;width:100%;background:${color};opacity:0.7;border-radius:2px 2px 0 0;border-top:1px solid ${color};flex:1;align-self:flex-end`;
+    const lbl=document.createElement('div');
+    lbl.style.cssText='font-family:var(--mono);font-size:0.55rem;color:var(--text-faint)';
+    lbl.textContent=days[i];
+    col.appendChild(bar); col.appendChild(lbl);
+    el.appendChild(col);
+  });
+}
+buildHistChart();
+
+// ── Smooth nav ──
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+  });
+});
+
+// ── Bar observer ──
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      en.target.querySelectorAll('.dt-bar-fill').forEach(b=>{
+        const w = b.style.width;
+        b.style.width='0';
+        setTimeout(()=>b.style.width=w,100);
+      });
+    }
+  });
+},{threshold:0.3});
+document.querySelectorAll('.dt-shell').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
